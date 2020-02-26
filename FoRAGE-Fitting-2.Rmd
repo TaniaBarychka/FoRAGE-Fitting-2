@@ -3,6 +3,8 @@ title: "FoRAGE Fitting-2"
 author: "TaniaBarychka"
 date: "26 February 2020"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 This is to carry on fitting FoRAGE database, in particular dealing with poor fit of handling times. 
@@ -17,6 +19,8 @@ library(ggpubr)
 library(gridExtra)
 library(car)
 library(lattice)
+library(car)
+library(outliers)
 
 #install.packages("devtools")
 #devtools::install_github("cardiomoon/ggiraphExtra")
@@ -59,14 +63,116 @@ forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/res
 #forage_db<- read.csv("C:/Users/tatsi/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 forage_db<-forage_db[-c(2084:2682),]
+table(forage_db$Major.grouping.1)
 ```
+
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+#I'll convert body masses and rates to NATURAL locarithms.
+
+#reduce data set to the variables we're interested in. 
+forage_db$L.PredBM<-log(forage_db$Predator.mass..mg.)
+forage_db$L.PreyBM<-log(forage_db$Prey.mass..mg.)
+forage_db$L.Fitted.a..median.of.BS.samples.<-log(forage_db$Fitted.a..median.of.BS.samples.)
+forage_db$L.Fittted.h..day.<-log(forage_db$Fittted.h..day.)
+
+#I'll remove angiosperms, protozoans and Nas.
+
+forage_db<-forage_db[forage_db$Vert.invert!="Angiosperm" ,]
+
+#Arrhenius
+#deduct To = 293.15K
+
+To<-293.15
+
+#devide by *kTTo
+k<-0.00008617
+
+#convert
+forage_db$temp_K<-forage_db$Temp..C..+273.15
+forage_db$temp_A<-(forage_db$temp_K-To)/(k*forage_db$temp_K*To)
+
+
+
+df<-cbind(as.numeric(forage_db$L.PredBM), as.numeric(forage_db$L.PreyBM), as.numeric(forage_db$L.Fittted.h..day.), as.numeric(forage_db$temp_A))
+
+#colnames(df)<-c("LogPredBM", "LogPreyBM", "LogFittedAR", "LogFittedH_day", "Temp_c")
+colnames(df)<-c("L.PredBM", "L.PreyBM", "L.Fittted.h..day.", "temp_A")
+
+#add ecto and endotherms
+forage_db$EctoEndo<-ifelse(forage_db$Major.grouping.1=="Bird" | forage_db$Major.grouping.1=="Mammal", "Endo", "Ecto" )
+
+
+table(forage_db$Vert.invert)
+
+df<-as.data.frame(df)
+
+df$VertInvert<-forage_db$Vert.invert
+df$EctoEndo<-forage_db$EctoEndo
+
+
+
+
+```
+
+One of the commonest reasons for a lack of fit is through the existence of outliers in the data. It is important to understand howevre, that a point way *appear* to be an outlier becasue of teh **misspecification of the model**, and not because there is anything wrong with the data. 
+
+**It is important to understand that analysis of residuals is a very poor way of looking for influence**. Precisely because a point is highl;y influential, it **forces the regression line close to it, and hence the influential point may have very small residual.** 
+
 
 I'll begin by identifying points that appear to be outliers on the plots of log-fitted handling times vs:
 
 - log-prey bodymass
 - log-predator bodymass
 - log-temperature
-- residuals
+
+**As a function of Prey bodymass** https://rpubs.com/RatherBit/188960
+
+```{r ehco=FALSE, fig.width=7, fig.height=7}
+
+#prey
+plot(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, col="lightblue", pch=19, cex=2)
+
+### this add the labels to the points using their rownames
+### font = 2 is bold
+
+text(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, labels=rownames(forage_db),data=forage_db, cex=0.6, font=5)
+
+modPrey<-lm(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM)
+summary(modPrey)
+```
+
+
+I look at the most extreme values of the explanatory variable (Prey Body mass) both to the left (extreme low values) and the right (extreme high values), as judged by (x-xmean)^2:
+
+```{r echo=FALSE}
+iM<-influence.measures(modPrey)
+#extract 
+iM$is.inf[iM$is.inf==TRUE]
+
+
+lmIn<-lm.influence(modPrey)
+
+```
+
+```{r}
+#outliers with car function
+outlierTest(modPrey)
+
+```
+
+
+```{r ehco=FALSE, fig.width=7, fig.height=7}
+#predator
+plot(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, col="lightgreen", pch=19, cex=2)
+
+### this add the labels to the points using their rownames
+### font = 2 is bold
+
+text(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, labels=rownames(forage_db),data=forage_db, cex=0.6, font=5)
+
+```
 
 
 Ideally, they are the same points. 
@@ -74,5 +180,58 @@ Ideally, they are the same points.
 If they belong to the same group (e.g. freshwater) then I'll remove the points and re-fit to the group.
 
 If they don't belong to the same group, I'll remove and refit.
+
+
+The cook’s distance for each observation i measures the change in Y^ (fitted Y) for all observations with and without the presence of observation i, so we know how much the observation i impacted the fitted values. In general use, those observations that have a cook’s distance greater than 4 times the mean may be classified as influential. This is not a hard boundary.
+
+In full model: http://r-statistics.co/Outlier-Treatment-With-R.html
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+mod <- lm(L.Fittted.h..day. ~ ., data=df)
+cooksd <- cooks.distance(mod)
+
+plot(cooksd, pch="*", cex=1, main="Influential Obs by Cooks distance")  # plot cook's distance
+abline(h = 4*mean(cooksd, na.rm=T), col="red")  # add cutoff line
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red", cex = 0.9)  # add labels
+
+influential_Full<- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm=T))])  # influential row numbers
+head(df[influential_Full, ])  # influential observations.
+
+```
+
+We get 79 influential values **based on the model that includes prey, predator and arrhenius temp.**
+
+The function outlierTest from car package gives the most extreme observation based on the given model. Here’s an example based on the mod linear model object we’d just created.
+
+The outliers package provides a number of useful functions to systematically extract outliers.
+
+```{r echo=FALSE}
+
+outlierTest(mod)
+
+set.seed(1234)
+
+#outliers gets the extreme most observation from the mean
+outlier(df$L.PredBM)
+
+s<-scores(df$L.Fittted.h..day., type = "chisq", prob=0.95)
+
+which(s[s==TRUE])
+```
+
+
+I would like to see whether values identified as influential based on the model(s) form part of a group in the database.
+
+I should also look at other models: Ht~Prey Bodymass; HT~PreyBody mass.
+
+
+```{r echo=FALSE}
+
+inf_df<-forage_db[forage_db$Data.set %in%  influential_Full,]
+
+table(inf_df$Major.grouping.1)
+
+```
+
 
 
