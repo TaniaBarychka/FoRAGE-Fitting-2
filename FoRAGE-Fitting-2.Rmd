@@ -1,0 +1,78 @@
+---
+title: "FoRAGE Fitting-2"
+author: "TaniaBarychka"
+date: "26 February 2020"
+output: html_document
+---
+
+This is to carry on fitting FoRAGE database, in particular dealing with poor fit of handling times. 
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+library (ggplot2)
+library(dplyr)          # for data manipulation
+library(tidyr)          # for data shaping
+library(ggpubr)
+library(gridExtra)
+library(car)
+library(lattice)
+
+#install.packages("devtools")
+#devtools::install_github("cardiomoon/ggiraphExtra")
+require(ggiraph)
+require(ggiraphExtra)
+#require(plyr)
+
+
+#work desktop
+#source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
+
+#home desktop
+source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
+
+
+#small laptop
+#source("C:/Users/tatsi/OneDrive/Desktop/HighstatLibV10.R")
+
+# Create customized color palette
+library(RColorBrewer)
+mycol = c(brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 6))
+```
+
+
+
+```{r echo=FALSE}
+#work
+#forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+
+#summary(forage_db)
+
+
+#home
+forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+
+#laptop
+#forage_db<- read.csv("C:/Users/Tania/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+
+#small laptop
+#forage_db<- read.csv("C:/Users/tatsi/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+
+forage_db<-forage_db[-c(2084:2682),]
+```
+
+I'll begin by identifying points that appear to be outliers on the plots of log-fitted handling times vs:
+
+- log-prey bodymass
+- log-predator bodymass
+- log-temperature
+- residuals
+
+
+Ideally, they are the same points. 
+
+If they belong to the same group (e.g. freshwater) then I'll remove the points and re-fit to the group.
+
+If they don't belong to the same group, I'll remove and refit.
+
+
