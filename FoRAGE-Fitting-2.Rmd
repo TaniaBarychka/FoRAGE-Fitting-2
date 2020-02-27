@@ -30,10 +30,10 @@ require(ggiraphExtra)
 
 
 #work desktop
-#source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
+source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
 
 #home desktop
-source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
+#source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
 
 
 #small laptop
@@ -48,13 +48,13 @@ mycol = c(brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 6))
 
 ```{r echo=FALSE}
 #work
-#forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #summary(forage_db)
 
 
 #home
-forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+#forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #laptop
 #forage_db<- read.csv("C:/Users/Tania/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
@@ -110,15 +110,11 @@ df<-as.data.frame(df)
 
 df$VertInvert<-forage_db$Vert.invert
 df$EctoEndo<-forage_db$EctoEndo
-
-
-
-
 ```
 
 One of the commonest reasons for a lack of fit is through the existence of outliers in the data. It is important to understand howevre, that a point way *appear* to be an outlier becasue of teh **misspecification of the model**, and not because there is anything wrong with the data. 
 
-**It is important to understand that analysis of residuals is a very poor way of looking for influence**. Precisely because a point is highl;y influential, it **forces the regression line close to it, and hence the influential point may have very small residual.** 
+**It is important to understand that analysis of residuals is a very poor way of looking for influence**. Precisely because a point is highly influential, it **forces the regression line close to it, and hence the influential point may have very small residual.** 
 
 
 I'll begin by identifying points that appear to be outliers on the plots of log-fitted handling times vs:
@@ -139,6 +135,29 @@ plot(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, col="lightblue", pch=19, ce
 
 text(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, labels=rownames(forage_db),data=forage_db, cex=0.6, font=5)
 
+ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Habitat))
+
+ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Mean.R2.of.fits))
+
+```
+
+
+I'm going to look at values for handling time of ln(ht)<=-20 abd check if they perhaps belong to a group.
+
+
+```{r echo=FALSE}
+
+sSet_df<-forage_db[forage_db$L.Fittted.h..day.<=-20,]
+
+summary(sSet_df)
+
+table(sSet_df$Vert.invert, sSet_df$Habitat)
+
+```
+
+
+```{r echo=FALSE}
+
 modPrey<-lm(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM)
 summary(modPrey)
 ```
@@ -151,8 +170,26 @@ iM<-influence.measures(modPrey)
 #extract 
 iM$is.inf[iM$is.inf==TRUE]
 
+#for plotting
+which(apply(iM$is.inf,1,any))
 
 lmIn<-lm.influence(modPrey)
+
+#the actual values of handling times
+df$L.Fittted.h..day.[which(apply(iM$is.inf,1,any))]
+
+#tha actual values of prey body mass
+df$L.PreyBM[which(apply(iM$is.inf,1,any))]
+
+summary(iM)
+
+#plot
+yp<-df$L.Fittted.h..day.[which(apply(iM$is.inf,1,any))]
+xp<-df$L.PreyBM[which(apply(iM$is.inf,1,any))]
+plot(df$L.PreyBM, df$L.Fittted.h..day., pch=16)
+
+points(xp, yp, col="red", cex=1.3, pch=16)
+abline(modPrey)
 
 ```
 
@@ -161,6 +198,9 @@ lmIn<-lm.influence(modPrey)
 outlierTest(modPrey)
 
 ```
+
+**Predator**
+
 
 
 ```{r ehco=FALSE, fig.width=7, fig.height=7}
