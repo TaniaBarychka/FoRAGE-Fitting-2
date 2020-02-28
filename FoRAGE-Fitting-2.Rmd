@@ -30,10 +30,10 @@ require(ggiraphExtra)
 
 
 #work desktop
-source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
+#source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
 
 #home desktop
-#source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
+source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
 
 
 #small laptop
@@ -48,13 +48,13 @@ mycol = c(brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 6))
 
 ```{r echo=FALSE}
 #work
-forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+#forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #summary(forage_db)
 
 
 #home
-#forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #laptop
 #forage_db<- read.csv("C:/Users/Tania/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
@@ -125,7 +125,7 @@ I'll begin by identifying points that appear to be outliers on the plots of log-
 
 **As a function of Prey bodymass** https://rpubs.com/RatherBit/188960
 
-```{r ehco=FALSE, fig.width=7, fig.height=7}
+```{r echo=FALSE, fig.width=10, fig.height=7}
 
 #prey
 plot(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, col="lightblue", pch=19, cex=2)
@@ -135,12 +135,86 @@ plot(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, col="lightblue", pch=19, ce
 
 text(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, labels=rownames(forage_db),data=forage_db, cex=0.6, font=5)
 
-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Habitat))
+ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Habitat))+ theme(panel.border = element_blank(),panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),strip.background = element_rect(colour="white", fill="white"), strip.text.x = element_text(size = 14), legend.position = "bottom", legend.title=element_blank())+theme_bw(base_size = 13, base_family = "")+theme(axis.title.x=element_blank())
 
-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Mean.R2.of.fits))
+#ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Mean.R2.of.fits))
+
+#ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Major.grouping.1.1))
 
 ```
 
+
+```{r echo=FALSE, eval=FALSE}
+
+p<-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.,tooltip=Major.grouping.1.1))+geom_boxplot_interactive()
+
+
+##for inetractive plot (print in console)
+
+p<-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.,tooltip=Major.grouping.1.1, fill=Major.grouping.1.1, data_id=Major.grouping.1.1))+geom_boxplot_interactive(outlier.colour = "red")+
+  guides(fill = "none") + theme_minimal()+xlab("Ln Prey Bodymass")+ylab("Ln Fitted handling times")
+
+
+x <- girafe(ggobj = p)
+if( interactive() ) print(x)
+
+
+```
+
+
+
+```{r echo=FALSE,fig.width=10, fig.height=7}
+
+p<-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.,tooltip=Major.grouping.1.1))+geom_boxplot_interactive()
+
+
+##for inetractive plot (print in console)
+
+p<-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.,tooltip=Major.grouping.1.1, fill=Major.grouping.1.1, data_id=Major.grouping.1.1))+geom_boxplot_interactive(outlier.colour = "red") + theme_minimal()+xlab("Ln Prey Bodymass")+ylab("Ln Fitted handling times")+theme(legend.position = "bottom")
+p
+
+```
+
+
+It looks like that prey type could be significant : once prey has been binned into types the trend of increasing handling times with prey body mass is more evident and the variation is due to outliers.
+
+I'll re-fit:
+
+```{r}
+
+ht3<-lm(L.Fittted.h..day.~as.factor(Major.grouping.1.1)+L.PreyBM, data=forage_db)
+
+summary(ht3)
+
+op<-par(mfrow=c(2,2))
+
+plot(ht3)
+
+
+```
+
+
+Most hanling times are between -15 and 0 with a slight increase in handling times with prey body mass. There appears to be some prey animlas that are gobbled up very quickly despite being of medium size.
+
+
+
+
+
+How about **predators**?
+
+
+```{r ehco=FALSE, fig.width=7, fig.height=7}
+#predator
+plot(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, col="lightgreen", pch=19, cex=2)
+
+### this add the labels to the points using their rownames
+### font = 2 is bold
+
+text(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, labels=rownames(forage_db),data=forage_db, cex=0.6, font=5)
+
+```
+The relationhips with predator bodymass is even less clear. Like with prey body mass there appears to be a band of animals that are realtivel big in size but have very small handling times. On the other hand we have some animals that are relatively small but have quick handling times.
 
 I'm going to look at values for handling time of ln(ht)<=-20 abd check if they perhaps belong to a group.
 
