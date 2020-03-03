@@ -21,6 +21,7 @@ library(car)
 library(lattice)
 library(car)
 library(outliers)
+library (gridExtra)
 
 #install.packages("devtools")
 #devtools::install_github("cardiomoon/ggiraphExtra")
@@ -30,10 +31,10 @@ require(ggiraphExtra)
 
 
 #work desktop
-#source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
+source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
 
 #home desktop
-source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
+#source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
 
 
 #small laptop
@@ -48,13 +49,13 @@ mycol = c(brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 6))
 
 ```{r echo=FALSE}
 #work
-#forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #summary(forage_db)
 
 
 #home
-forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+#forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #laptop
 #forage_db<- read.csv("C:/Users/Tania/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
@@ -114,7 +115,7 @@ df$EctoEndo<-forage_db$EctoEndo
 
 One of the commonest reasons for a lack of fit is through the existence of outliers in the data. It is important to understand howevre, that a point way *appear* to be an outlier becasue of teh **misspecification of the model**, and not because there is anything wrong with the data. 
 
-**It is important to understand that analysis of residuals is a very poor way of looking for influence**. Precisely because a point is highly influential, it **forces the regression line close to it, and hence the influential point may have very small residual.** 
+It is important to understand that **analysis of residuals is a very poor way of looking for influence**. Precisely because a point is highly influential, it **forces the regression line close to it, and hence the influential point may have very small residual.** 
 
 
 I'll begin by identifying points that appear to be outliers on the plots of log-fitted handling times vs:
@@ -123,7 +124,8 @@ I'll begin by identifying points that appear to be outliers on the plots of log-
 - log-predator bodymass
 - log-temperature
 
-**As a function of Prey bodymass** https://rpubs.com/RatherBit/188960
+**As a function of Prey bodymass**
+(code from https://rpubs.com/RatherBit/188960)
 
 ```{r echo=FALSE, fig.width=10, fig.height=7}
 
@@ -135,13 +137,23 @@ plot(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, col="lightblue", pch=19, ce
 
 text(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM, labels=rownames(forage_db),data=forage_db, cex=0.6, font=5)
 
-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Habitat))+ theme(panel.border = element_blank(),panel.grid.major = element_blank(),
-panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),strip.background = element_rect(colour="white", fill="white"), strip.text.x = element_text(size = 14), legend.position = "bottom", legend.title=element_blank())+theme_bw(base_size = 13, base_family = "")+theme(axis.title.x=element_blank())
+
+
+a<-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Habitat))+ theme(panel.border = element_blank(),panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),strip.background = element_rect(colour="white", fill="white"), strip.text.x = element_text(size = 14), legend.position = "top", legend.title=element_blank())
+
+#+theme_bw(base_size = 13, base_family = "")
 
 #ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Mean.R2.of.fits))
 
 #ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Major.grouping.1.1))
 
+b<-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$EctoEndo))+ theme(panel.border = element_blank(),panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),strip.background = element_rect(colour="white", fill="white"), strip.text.x = element_text(size = 14), legend.position = "top", legend.title=element_blank())
+#+theme_bw(base_size = 13, base_family = "")
+
+
+grid.arrange(a, b, ncol=2)
 ```
 
 
@@ -175,20 +187,36 @@ p<-ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.,tooltip=Major.grouping.1.1, 
 p
 
 
-xyplot(L.Fittted.h..day.~L.PreyBM|Major.grouping.1.1, type="p", data=forage_db)
+#xyplot(L.Fittted.h..day.~L.PreyBM|Major.grouping.1.1, type="p", data=forage_db)
 
 ```
 
 
 It looks like that prey type could be significant : once prey has been binned into types the trend of increasing handling times with prey body mass is more evident and the variation is due to outliers.
 
-I'll re-fit:
+I'll re-fit **Handling Times~Prey Body mass + Prey Type** (Kalinoski and DeLong, 2016):
 
-```{r}
+```{r echo=FALSE,fig.width=10, fig.height=7}
 
-forage_db$fPreyType<-factor(forage_db$Major.grouping.1.1)
+df_new<-cbind(as.numeric(forage_db$L.PredBM), as.numeric(forage_db$L.PreyBM), as.numeric(forage_db$L.Fitted.a..median.of.BS.samples.), as.numeric(forage_db$L.Fittted.h..day.), as.numeric(forage_db$Temp..C..))
 
-ht3<-lm(L.Fittted.h..day.~fPreyType*L.PreyBM, data=forage_db)
+#colnames(df)<-c("LogPredBM", "LogPreyBM", "LogFittedAR", "LogFittedH_day", "Temp_c")
+colnames(df_new)<-c("L.PredBM", "L.PreyBM", "L.Fitted.a..median.of.BS.samples.", "L.Fittted.h..day.", "Temp..C..")
+
+
+df_new<-as.data.frame(df_new)
+
+df_new$VertInvert<-forage_db$Vert.invert
+df_new$EctoEndo<-forage_db$EctoEndo
+df_new$PreyType<-as.factor(forage_db$Major.grouping.1.1)
+
+df_no<-df_new[df$VertInvert!="" | df$VertInvert!="Angiosperm",]
+table(df_no$VertInvert, df_no$EctoEndo)
+
+df_na<-na.omit(df_no)
+
+
+ht3<-lm(L.Fittted.h..day.~PreyType+L.PreyBM, data=df_na)
 drop1(ht3, test="F")
 
 
@@ -203,23 +231,21 @@ E<-rstandard(ht3)
 hist(E)
 qqnorm(E)
 
-plot(E~forage_db$L.PreyBM)
-plot(E~forage_db$fPreyType)
+plot(E~df_na$L.PreyBM)
+plot(E~df_na$PreyType)
 
+par(op)
 
 ```
 
+The model looks poor. 
 
-Most hanling times are between -15 and 0 with a slight increase in handling times with prey body mass. There appears to be some prey animlas that are gobbled up very quickly despite being of medium size.
+**Predator**
 
-
-
-
-
-How about **predators**?
+Samraat P. suggested focusing on predator rather than prey body masses.
 
 
-```{r ehco=FALSE, fig.width=7, fig.height=7}
+```{r echo=FALSE, fig.width=10, fig.height=7}
 #predator
 plot(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, col="lightgreen", pch=19, cex=2)
 
@@ -228,33 +254,129 @@ plot(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, col="lightgreen", pch=19, c
 
 text(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, labels=rownames(forage_db),data=forage_db, cex=0.6, font=5)
 
-```
-The relationhips with predator bodymass is even less clear. Like with prey body mass there appears to be a band of animals that are realtivel big in size but have very small handling times. On the other hand we have some animals that are relatively small but have quick handling times.
+c<-ggplot(forage_db, aes(L.PredBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Habitat))+ theme(panel.border = element_blank(),panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),strip.background = element_rect(colour="white", fill="white"), strip.text.x = element_text(size = 14), legend.position = "top", legend.title=element_blank())
 
-I'm going to look at values for handling time of ln(ht)<=-20 abd check if they perhaps belong to a group.
+#+theme_bw(base_size = 13, base_family = "")
+
+#ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Mean.R2.of.fits))
+
+#ggplot(forage_db, aes(L.PreyBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$Major.grouping.1.1))
+
+d<-ggplot(forage_db, aes(L.PredBM,L.Fittted.h..day.))+geom_point(aes(col=forage_db$EctoEndo))+ theme(panel.border = element_blank(),panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),strip.background = element_rect(colour="white", fill="white"), strip.text.x = element_text(size = 14), legend.position = "top", legend.title=element_blank())
+#+theme_bw(base_size = 13, base_family = "")
+
+grid.arrange(c, d, ncol=2)
+
+```
+
+The relationships with predator bodymass is less clear than with prey body masses. Like with prey body mass there appears to be a band of animals that are relatively big in size but have very small handling times. On the other hand we have some animals that are relatively small but have quick handling times.
+
+
+
+```{r echo=FALSE,fig.width=10, fig.height=7}
+
+e<-ggplot(forage_db, aes(L.PredBM,L.Fittted.h..day.,tooltip=Major.grouping.1.1))+geom_boxplot_interactive()
+
+
+##for inetractive plot (print in console)
+
+e<-ggplot(forage_db, aes(L.PredBM,L.Fittted.h..day.,tooltip=Major.grouping.1.1, fill=Major.grouping.1.1, data_id=Major.grouping.1.1))+geom_boxplot_interactive(outlier.colour = "red") + theme_minimal()+xlab("Ln Predator Bodymass")+ylab("Ln Fitted handling times")+theme(legend.position = "bottom",legend.title=element_blank())+ggtitle("Grouped by Prey Type")
+e
+
+
+
+#xyplot(L.Fittted.h..day.~L.PreyBM|Major.grouping.1.1, type="p", data=forage_db)
+
+```
+
+
+
+
+```{r echo=FALSE,fig.width=10, fig.height=7, eval=FALSE}
+#**Grouped by Predator Type**
+
+f<-ggplot(forage_db, aes(L.PredBM,L.Fittted.h..day.,tooltip=Major.grouping.1))+geom_boxplot_interactive()
+
+
+##for inetractive plot (print in console)
+
+f<-ggplot(forage_db, aes(L.PredBM,L.Fittted.h..day.,tooltip=Major.grouping.1, fill=Major.grouping.1.1, data_id=Major.grouping.1.1))+geom_boxplot_interactive(outlier.colour = "red") + theme_minimal()+xlab("Ln Predator Bodymass")+ylab("Ln Fitted handling times")+theme(legend.position = "bottom",legend.title=element_blank())
+f
+
+
+#xyplot(L.Fittted.h..day.~L.PreyBM|Major.grouping.1.1, type="p", data=forage_db)
+
+```
+
+
+The plot above shows what happens if we assume that predators in the same body mass classes preyed on a certain prey species exclusively. I.e. assumes underlying relationships between predator body mass and prey type.
+
+**Handling times~Predator Body mass + Prey Type**
+
+
+```{r echo=FALSE,fig.width=10, fig.height=7}
+
+ht4<-lm(L.Fittted.h..day.~PreyType+L.PredBM, data=df_na)
+drop1(ht4, test="F")
+
+
+summary(ht4)
+
+op<-par(mfrow=c(2,2))
+
+plot(ht4)
+
+E<-rstandard(ht4)
+
+hist(E)
+qqnorm(E)
+
+plot(E~df_na$L.PredBM)
+plot(E~df_na$PreyType)
+
+par(op)
+
+```
+
+This model is not great either.
+
+Samraat also suggested collapsing prey by each predator (assuming we have multiple measurements of prey per predator). The idea is to take the smallest handling time (=optimal) because it takes a long time for models of handling time to converge on the optimum. This should hopefully help with the variability.
+
+
+
+**Values below threshold**
+
+Most hanling times are between -15 and 0 with a slight increase in handling times with prey body mass. There appears to be some prey animlas that are gobbled up very quickly despite being of medium size.
+
+
+I'm going to look at values for handling time of ln(ht)<=-20 abd check if they perhaps belong to a group.Ideally, they are the same points. 
+
+If they belong to the same group (e.g. freshwater) then I'll remove the points and re-fit to the group.
+
+If they don't belong to the same group, I'll remove and refit.
+
 
 
 ```{r echo=FALSE}
 
 sSet_df<-forage_db[forage_db$L.Fittted.h..day.<=-20,]
 
-summary(sSet_df)
+#summary(sSet_df)
 
 table(sSet_df$Vert.invert, sSet_df$Habitat)
 
 ```
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 
 modPrey<-lm(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM)
 summary(modPrey)
-```
 
 
-I look at the most extreme values of the explanatory variable (Prey Body mass) both to the left (extreme low values) and the right (extreme high values), as judged by (x-xmean)^2:
-
-```{r echo=FALSE}
+#I look at the most extreme values of the explanatory variable (Prey Body mass) both to the left (extreme low values) and the right (extreme high values), as judged by (x-xmean)^2:
 iM<-influence.measures(modPrey)
 #extract 
 iM$is.inf[iM$is.inf==TRUE]
@@ -280,35 +402,16 @@ plot(df$L.PreyBM, df$L.Fittted.h..day., pch=16)
 points(xp, yp, col="red", cex=1.3, pch=16)
 abline(modPrey)
 
-```
 
-```{r}
 #outliers with car function
 outlierTest(modPrey)
 
 ```
 
-**Predator**
 
 
 
-```{r ehco=FALSE, fig.width=7, fig.height=7}
-#predator
-plot(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, col="lightgreen", pch=19, cex=2)
-
-### this add the labels to the points using their rownames
-### font = 2 is bold
-
-text(forage_db$L.Fittted.h..day.~forage_db$L.PredBM, labels=rownames(forage_db),data=forage_db, cex=0.6, font=5)
-
-```
-
-
-Ideally, they are the same points. 
-
-If they belong to the same group (e.g. freshwater) then I'll remove the points and re-fit to the group.
-
-If they don't belong to the same group, I'll remove and refit.
+**Cook's distance**
 
 
 The cook’s distance for each observation i measures the change in Y^ (fitted Y) for all observations with and without the presence of observation i, so we know how much the observation i impacted the fitted values. In general use, those observations that have a cook’s distance greater than 4 times the mean may be classified as influential. This is not a hard boundary.
@@ -345,7 +448,7 @@ outlier(df$L.PredBM)
 
 s<-scores(df$L.Fittted.h..day., type = "chisq", prob=0.95)
 
-which(s[s==TRUE])
+#which(s[s==TRUE])
 ```
 
 
@@ -360,6 +463,7 @@ inf_df<-forage_db[forage_db$Data.set %in%  influential_Full,]
 
 table(inf_df$Major.grouping.1)
 
+plot(inf_df$L.PreyBM,inf_df$L.Fittted.h..day.)
 ```
 
 
