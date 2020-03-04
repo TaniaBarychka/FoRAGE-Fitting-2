@@ -31,10 +31,10 @@ require(ggiraphExtra)
 
 
 #work desktop
-source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
+#source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
 
 #home desktop
-#source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
+source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
 
 
 #small laptop
@@ -49,13 +49,13 @@ mycol = c(brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 6))
 
 ```{r echo=FALSE}
 #work
-forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+#forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #summary(forage_db)
 
 
 #home
-#forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #laptop
 #forage_db<- read.csv("C:/Users/Tania/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
@@ -346,75 +346,13 @@ Samraat also suggested collapsing prey by each predator (assuming we have multip
 
 
 
-**Values below threshold**
-
-Most hanling times are between -15 and 0 with a slight increase in handling times with prey body mass. There appears to be some prey animlas that are gobbled up very quickly despite being of medium size.
-
-
-I'm going to look at values for handling time of ln(ht)<=-20 abd check if they perhaps belong to a group.Ideally, they are the same points. 
-
-If they belong to the same group (e.g. freshwater) then I'll remove the points and re-fit to the group.
-
-If they don't belong to the same group, I'll remove and refit.
-
-
-
-```{r echo=FALSE}
-
-sSet_df<-forage_db[forage_db$L.Fittted.h..day.<=-20,]
-
-#summary(sSet_df)
-
-table(sSet_df$Vert.invert, sSet_df$Habitat)
-
-```
-
-
-```{r echo=FALSE, eval=FALSE}
-
-modPrey<-lm(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM)
-summary(modPrey)
-
-
-#I look at the most extreme values of the explanatory variable (Prey Body mass) both to the left (extreme low values) and the right (extreme high values), as judged by (x-xmean)^2:
-iM<-influence.measures(modPrey)
-#extract 
-iM$is.inf[iM$is.inf==TRUE]
-
-#for plotting
-which(apply(iM$is.inf,1,any))
-
-lmIn<-lm.influence(modPrey)
-
-#the actual values of handling times
-df$L.Fittted.h..day.[which(apply(iM$is.inf,1,any))]
-
-#tha actual values of prey body mass
-df$L.PreyBM[which(apply(iM$is.inf,1,any))]
-
-summary(iM)
-
-#plot
-yp<-df$L.Fittted.h..day.[which(apply(iM$is.inf,1,any))]
-xp<-df$L.PreyBM[which(apply(iM$is.inf,1,any))]
-plot(df$L.PreyBM, df$L.Fittted.h..day., pch=16)
-
-points(xp, yp, col="red", cex=1.3, pch=16)
-abline(modPrey)
-
-
-#outliers with car function
-outlierTest(modPrey)
-
-```
-
 
 
 
 **Cook's distance**
 
 
-The cook’s distance for each observation i measures the change in Y^ (fitted Y) for all observations with and without the presence of observation i, so we know how much the observation i impacted the fitted values. In general use, those observations that have a cook’s distance greater than 4 times the mean may be classified as influential. This is not a hard boundary.
+The cook’s distance for each observation *i* measures the change in Y^ (fitted Y) for all observations with and without the presence of observation i, so we know how much the observation i impacted the fitted values. In general use, those observations that have a cook’s distance greater than 4 times the mean may be classified as influential. This is not a hard boundary.
 
 In full model: http://r-statistics.co/Outlier-Treatment-With-R.html
 
@@ -464,6 +402,153 @@ inf_df<-forage_db[forage_db$Data.set %in%  influential_Full,]
 table(inf_df$Major.grouping.1)
 
 plot(inf_df$L.PreyBM,inf_df$L.Fittted.h..day.)
+
+
+```
+
+I'm not sure Cooke's distance is all that helpful here. I'm going to
+
+**Individual values**
+
+Most handling times are between -15 and 0 with handling times increasing with prey body mass. 
+
+However, there appears to be 'a group' of animals with handling times below -12 to -15: animals that are realtively large but aee consumed very quickly. Who might they be?
+
+There appears to be some prey animlas that are gobbled up very quickly despite being of medium size,e.g. we have animals of over 3kg in size that are eaten as quickly as animals 0.00005mg in size. Hard to believe it's likely. 
+
+One possible explanation could be units error.
+
+
+I'm going to dip into cluster analysis very quickly and then go thorugh values from right to left (large prey with very small handling times).
+
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+op<-par(mfrow=c(2,2))
+
+
+
+km3<-kmeans(data.frame(df_na$L.PreyBM, df_na$L.Fittted.h..day.),3)
+plot(df_na$L.PreyBM, df_na$L.Fittted.h..day., col=km3[[1]])
+
+
+km4<-kmeans(data.frame(df_na$L.PreyBM, df_na$L.Fittted.h..day.),4)
+plot(df_na$L.PreyBM, df_na$L.Fittted.h..day., col=km4[[1]])
+
+km5<-kmeans(data.frame(df_na$L.PreyBM, df_na$L.Fittted.h..day.),5)
+plot(df_na$L.PreyBM, df_na$L.Fittted.h..day., col=km5[[1]])
+
+
+km6<-kmeans(data.frame(df_na$L.PreyBM, df_na$L.Fittted.h..day.),6)
+plot(df_na$L.PreyBM, df_na$L.Fittted.h..day., col=km6[[1]])
+par(op)
+```
+
+
+```{r echo=FALSE, fig.width=10, fig.height=10, eval=FALSE}
+#Discriminant analysis
+library(MASS)
+
+#remove attack rate
+df_na_r<-df_na[,-c(3,6:8)]
+
+model<-lda(L.Fittted.h..day.~., data = df_na_r)
+plot(model, col=rep(1:6, each=30))
+
+model
+
+
+#too much overlap and not enough discrimination. 
+```
+
+
+
+
+
+I'm going to look at values for handling time of ln(ht)<=-15 and check if they make sense and perhaps belong to a group.
+
+```{recho=FALSE,fig.width=10, fig.height=10}
+
+sSet_df<-forage_db[forage_db$L.Fittted.h..day.<=-15,]
+
+sSet_df_gr1<-sSet_df[sSet_df$L.PreyBM>=0,]
+
+par(mfrow=c(2,2))
+
+# plots
+gg_point = ggplot(data = sSet_df_gr1)+geom_point_interactive(aes(x = L.PreyBM, y = L.Fittted.h..day., color=Habitat, shape=Vert.invert,tooltip = Data.set, data_id = Data.set)) + theme_minimal()
+
+x<-girafe(ggobj = gg_point)
+if( interactive() ) print(x)
+
+#ggplot(sSet_df_gr1, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
+
+
+```
+
+```{r echo=FALSE}
+
+sSet_new<-cbind(as.numeric(forage_db$L.PredBM), as.numeric(forage_db$L.PreyBM), as.numeric(forage_db$L.Fittted.h..day.), as.numeric(forage_db$Temp..C..))
+
+#colnames(df)<-c("LogPredBM", "LogPreyBM", "LogFittedAR", "LogFittedH_day", "Temp_c")
+colnames(sSet_new)<-c("L.PredBM", "L.PreyBM", "L.Fittted.h..day.", "Temp..C..")
+
+sSet_new<-as.data.frame(sSet_new)
+
+df_new$VertInvert<-forage_db$Vert.invert
+df_new$EctoEndo<-forage_db$EctoEndo
+df_new$PreyType<-as.factor(forage_db$Major.grouping.1.1)
+
+df_no<-df_new[df$VertInvert!="" | df$VertInvert!="Angiosperm",]
+table(df_no$VertInvert, df_no$EctoEndo)
+
+df_na<-na.omit(df_no)
+
+
+max(sSet_df$L.PreyBM)
+#summary(sSet_df)
+
+table(sSet_df$Vert.invert, sSet_df$Habitat)
+
+```
+
+
+```{r echo=FALSE, eval=FALSE}
+
+modPrey<-lm(forage_db$L.Fittted.h..day.~forage_db$L.PreyBM)
+summary(modPrey)
+
+
+#I look at the most extreme values of the explanatory variable (Prey Body mass) both to the left (extreme low values) and the right (extreme high values), as judged by (x-xmean)^2:
+iM<-influence.measures(modPrey)
+#extract 
+iM$is.inf[iM$is.inf==TRUE]
+
+#for plotting
+which(apply(iM$is.inf,1,any))
+
+lmIn<-lm.influence(modPrey)
+
+#the actual values of handling times
+df$L.Fittted.h..day.[which(apply(iM$is.inf,1,any))]
+
+#tha actual values of prey body mass
+df$L.PreyBM[which(apply(iM$is.inf,1,any))]
+
+summary(iM)
+
+#plot
+yp<-df$L.Fittted.h..day.[which(apply(iM$is.inf,1,any))]
+xp<-df$L.PreyBM[which(apply(iM$is.inf,1,any))]
+plot(df$L.PreyBM, df$L.Fittted.h..day., pch=16)
+
+points(xp, yp, col="red", cex=1.3, pch=16)
+abline(modPrey)
+
+
+#outliers with car function
+outlierTest(modPrey)
+
 ```
 
 
