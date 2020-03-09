@@ -215,7 +215,10 @@ table(df_no$VertInvert, df_no$EctoEndo)
 
 df_na<-na.omit(df_no)
 
+```
 
+
+```{r echo=FALSE,fig.width=10, fig.height=7}
 ht3<-lm(L.Fittted.h..day.~PreyType+L.PreyBM, data=df_na)
 drop1(ht3, test="F")
 
@@ -471,9 +474,10 @@ I'm going to look at values for handling time of ln(ht)<=-15 and check if they m
 
 sSet_df<-forage_db[forage_db$L.Fittted.h..day.<=-15,]
 
+##subset 1##
 sSet_df_gr1<-sSet_df[sSet_df$L.PreyBM>=0,]
 
-par(mfrow=c(2,2))
+#par(mfrow=c(2,2))
 
 # plots
 gg_point = ggplot(data = sSet_df_gr1)+geom_point_interactive(aes(x = L.PreyBM, y = L.Fittted.h..day., color=Habitat, shape=Vert.invert,tooltip = Data.set, data_id = Data.set)) + theme_minimal()
@@ -482,6 +486,22 @@ x<-girafe(ggobj = gg_point)
 if( interactive() ) print(x)
 
 #ggplot(sSet_df_gr1, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
+
+
+
+##Sub-set 2##
+
+sSet_df_gr2<-sSet_df[sSet_df$L.PreyBM<0 & sSet_df$L.PreyBM>=-15,]
+
+#par(mfrow=c(2,2))
+
+# plots
+gg_point = ggplot(data = sSet_df_gr2)+geom_point_interactive(aes(x = L.PreyBM, y = L.Fittted.h..day., color=Habitat, shape=Vert.invert,tooltip = Data.set, data_id = Data.set)) + theme_minimal()
+
+x<-girafe(ggobj = gg_point)
+if( interactive() ) print(x)
+
+#ggplot(sSet_df_gr2, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
 
 
 ```
