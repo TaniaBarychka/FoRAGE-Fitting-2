@@ -31,10 +31,10 @@ require(ggiraphExtra)
 
 
 #work desktop
-#source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
+source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
 
 #home desktop
-source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
+#source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
 
 
 #small laptop
@@ -49,13 +49,13 @@ mycol = c(brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 6))
 
 ```{r echo=FALSE}
 #work
-#forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #summary(forage_db)
 
 
 #home
-forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+#forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #laptop
 #forage_db<- read.csv("C:/Users/Tania/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
@@ -215,7 +215,10 @@ table(df_no$VertInvert, df_no$EctoEndo)
 
 df_na<-na.omit(df_no)
 
+```
 
+
+```{r echo=FALSE,fig.width=10, fig.height=7}
 ht3<-lm(L.Fittted.h..day.~PreyType+L.PreyBM, data=df_na)
 drop1(ht3, test="F")
 
@@ -467,13 +470,14 @@ model
 
 I'm going to look at values for handling time of ln(ht)<=-15 and check if they make sense and perhaps belong to a group.
 
-```{recho=FALSE,fig.width=10, fig.height=10}
+```{r echo=FALSE,fig.width=10, fig.height=10, warning=FALSE}
 
 sSet_df<-forage_db[forage_db$L.Fittted.h..day.<=-15,]
 
+##subset 1##
 sSet_df_gr1<-sSet_df[sSet_df$L.PreyBM>=0,]
 
-par(mfrow=c(2,2))
+#par(mfrow=c(2,2))
 
 # plots
 gg_point = ggplot(data = sSet_df_gr1)+geom_point_interactive(aes(x = L.PreyBM, y = L.Fittted.h..day., color=Habitat, shape=Vert.invert,tooltip = Data.set, data_id = Data.set)) + theme_minimal()
@@ -484,31 +488,76 @@ if( interactive() ) print(x)
 #ggplot(sSet_df_gr1, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
 
 
+
+##Sub-set 2##
+sSet_df_gr2<-sSet_df[sSet_df$L.PreyBM<0 & sSet_df$L.PreyBM>=-15,]
+
+#par(mfrow=c(2,2))
+
+# plots
+gg_point = ggplot(data = sSet_df_gr2)+geom_point_interactive(aes(x = L.PreyBM, y = L.Fittted.h..day., color=Habitat, shape=Vert.invert,tooltip = Data.set, data_id = Data.set)) + theme_minimal()
+
+x<-girafe(ggobj = gg_point)
+if( interactive() ) print(x)
+
+#ggplot(sSet_df_gr2, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
+
+
+##sub-set 3##
+#summary(sSet_df$L.PreyBM)
+sSet_df_gr3<-sSet_df[sSet_df$L.PreyBM>-30,]
+
+#par(mfrow=c(2,2))
+
+# plots
+gg_point = ggplot(data = sSet_df_gr3)+geom_point_interactive(aes(x = L.PreyBM, y = L.Fittted.h..day., color=Habitat, shape=Vert.invert,tooltip = Data.set, data_id = Data.set)) + theme_minimal()
+
+x<-girafe(ggobj = gg_point)
+if( interactive() ) print(x)
+
+#ggplot(sSet_df_gr2, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
+
 ```
+
+Based on data check, I'm going to remove any points with handling times <-15 on ln-scale.
 
 ```{r echo=FALSE}
 
-sSet_new<-cbind(as.numeric(forage_db$L.PredBM), as.numeric(forage_db$L.PreyBM), as.numeric(forage_db$L.Fittted.h..day.), as.numeric(forage_db$Temp..C..))
+#Arrhenius
+#deduct To = 293.15K
+
+To<-293.15
+
+#devide by *kTTo
+k<-0.00008617
+
+#convert
+forage_db$temp_K<-forage_db$Temp..C..+273.15
+forage_db$temp_A<-(forage_db$temp_K-To)/(k*forage_db$temp_K*To)
+
+
+
+df_sSet<-cbind(as.numeric(forage_db$L.PredBM), as.numeric(forage_db$L.PreyBM), as.numeric(forage_db$L.Fittted.h..day.), as.numeric(forage_db$temp_A))
 
 #colnames(df)<-c("LogPredBM", "LogPreyBM", "LogFittedAR", "LogFittedH_day", "Temp_c")
-colnames(sSet_new)<-c("L.PredBM", "L.PreyBM", "L.Fittted.h..day.", "Temp..C..")
+colnames(df_sSet)<-c("L.PredBM", "L.PreyBM", "L.Fittted.h..day.", "temp_A")
 
-sSet_new<-as.data.frame(sSet_new)
-
-df_new$VertInvert<-forage_db$Vert.invert
-df_new$EctoEndo<-forage_db$EctoEndo
-df_new$PreyType<-as.factor(forage_db$Major.grouping.1.1)
-
-df_no<-df_new[df$VertInvert!="" | df$VertInvert!="Angiosperm",]
-table(df_no$VertInvert, df_no$EctoEndo)
-
-df_na<-na.omit(df_no)
+#add ecto and endotherms
+forage_db$EctoEndo<-ifelse(forage_db$Major.grouping.1=="Bird" | forage_db$Major.grouping.1=="Mammal", "Endo", "Ecto" )
 
 
-max(sSet_df$L.PreyBM)
-#summary(sSet_df)
+#table(forage_db$Vert.invert)
 
-table(sSet_df$Vert.invert, sSet_df$Habitat)
+df_sSet<-as.data.frame(df_sSet)
+
+df_sSet$VertInvert<-forage_db$Vert.invert
+df_sSet$EctoEndo<-forage_db$EctoEndo
+
+#df_na<-na.omit(df_no)
+
+df_sSet<-df_sSet[df_sSet$L.Fittted.h..day.>-15,]
+
+#table(sSet_df$Vert.invert, sSet_df$Habitat)
 
 ```
 
@@ -551,5 +600,123 @@ outlierTest(modPrey)
 
 ```
 
+Fit:
+
+```{r fig.width=10, fig.height=10, warning=FALSE}
+
+ht_ss<-lm(L.Fittted.h..day.~L.PreyBM*L.PredBM*temp_A, data=df_sSet)
+
+summary(ht_ss)
+
+ht_ss2<-update(ht_ss, ~.-L.PreyBM:temp_A)
+summary(ht_ss2)
+
+ht_ss3<-update(ht_ss2, ~.-L.PredBM:temp_A)
+summary(ht_ss3)
+
+op<-par(mfrow=c(2,2))
+plot(ht_ss3)
+
+df_na_sSet<-na.omit(df_sSet)
+#win.graph();
+
+#Check for normality
+E<-rstandard(ht_ss3)
+
+hist(E)
+qqnorm(E)
+
+#check for independence and homogeneity: residuals versus individual explanatory variables
+plot(y=E, x=df_na_sSet$L.PreyBM, xlab="Ln Prey bodymass", ylab="Residuals")
+abline(0,0)
+
+plot(y=E, x=df_na_sSet$L.PredBM, xlab="Ln Predator bodymass", ylab="Residuals")
+abline(0,0)
+
+#Residuals against Temp
+plot(E~df_na_sSet$temp_A, xlab="Temp, A", ylab="Residuals")
+abline(0,0)
 
 
+```
+
+```{r echo=FALSE, fig.width=10, fig.height=10, warning=FALSE, eval=FALSE}
+
+
+#predict
+ggPredict(ht_ss3, interactive = TRUE)
+```
+
+Both predator and prey body masses are now coming as significant as well as temperature (a) and two-way interactions between prey and predator and three-way interaction with temperature.
+
+Non-normality has been reduced though residuals still look a bit trend-y: the variance is decreasing with fitted values.
+ 
+I'm concerned about correlation between prey and predators in this new smaller dataset.
+
+```{r echo=FALSE}
+
+#correlation test
+corDF<-cor.test(df_sSet$L.PredBM, df_sSet$L.PreyBM)
+corDF
+
+#The variance inflation factor (VIF) quantifies the extent of correlation between one predictor and the other predictors in a model. It is used for diagnosing collinearity/multicollinearity. Higher values signify that it is difficult to impossible to assess accurately the contribution of predictors to a model.
+
+vifDF<-corvif(df_sSet[,c(-3:-6)])
+
+```
+
+Correlation between body masses is high (0.81). Vif values are still under 3 with 3 being a threshold suggested by Zuur et al 2009.I'll keep all the variables in the analysis for the timebeing.
+
+Ok, let's try simpler models (without interaction).
+
+```{r fig.width=10, fig.height=10, warning=FALSE}
+#prey+pred+temp
+ss_m1<-lm(L.Fittted.h..day.~L.PreyBM+L.PredBM+temp_A, data=df_sSet)
+summary(ss_m1)
+
+#Temperature not significant on its own.
+ss_m2<-update(ss_m1, ~.-temp_A)
+summary(ss_m2)
+
+#Let's check
+op<-par(mfrow=c(2,2))
+plot(ss_m2)
+
+df_na_sSet<-na.omit(df_sSet)
+#win.graph();
+
+#min(ss_m2$residuals)
+
+
+
+#I'll remove point 2008
+#ss_m2_r<-lm(formula = L.Fittted.h..day. ~ L.PreyBM + L.PredBM, subset=(1:length(L.Fittted.h..day.)!=2008), data=df_sSet)
+#plot(ss_m2_r)
+
+ss_m2_na<-lm(L.Fittted.h..day.~L.PreyBM+L.PredBM, data=df_na_sSet)
+
+#Check for normality
+E<-rstandard(ss_m2_na)
+
+hist(E)
+qqnorm(E)
+
+#check for independence and homogeneity: residuals versus individual explanatory variables
+plot(y=E, x=df_na_sSet$L.PreyBM, xlab="Ln Prey bodymass", ylab="Residuals")
+abline(0,0)
+
+plot(y=E, x=df_na_sSet$L.PredBM, xlab="Ln Predator bodymass", ylab="Residuals")
+abline(0,0)
+
+#Residuals against Temp
+plot(E~df_na_sSet$temp_A, xlab="Temp, A", ylab="Residuals")
+abline(0,0)
+```
+
+
+```{r echo=FALSE, fig.width=10, fig.height=10, warning=FALSE}
+
+
+#predict
+ggPredict(ss_m2_na, interactive = TRUE)
+```
