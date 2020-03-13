@@ -31,10 +31,10 @@ require(ggiraphExtra)
 
 
 #work desktop
-source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
+#source("C:/Users/Tania Barychka/OneDrive/Desktop/HighstatLibV10.R")
 
 #home desktop
-#source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
+source("C:/Users/Etherian/OneDrive/Desktop/HighstatLibV10.R")
 
 
 #small laptop
@@ -49,13 +49,13 @@ mycol = c(brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 6))
 
 ```{r echo=FALSE}
 #work
-forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+#forage_db<- read.csv("C:/Users/Tania Barychka/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #summary(forage_db)
 
 
 #home
-#forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
+forage_db<- read.csv("C:/Users/Etherian/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
 
 #laptop
 #forage_db<- read.csv("C:/Users/Tania/OneDrive/Documents/Madingley Postdoc/resource_map_doi_10_5063_F17H1GTQ/data/FoRAGE_db_12_19_18_data_set.csv")
@@ -490,10 +490,9 @@ if( interactive() ) print(x)
 
 
 ##Sub-set 2##
-<<<<<<< HEAD
-=======
 
->>>>>>> 8bc6ad4b3440e62a753431503697ac5942b070f2
+
+
 sSet_df_gr2<-sSet_df[sSet_df$L.PreyBM<0 & sSet_df$L.PreyBM>=-15,]
 
 #par(mfrow=c(2,2))
@@ -507,7 +506,6 @@ if( interactive() ) print(x)
 #ggplot(sSet_df_gr2, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
 
 
-<<<<<<< HEAD
 ##sub-set 3##
 #summary(sSet_df$L.PreyBM)
 sSet_df_gr3<-sSet_df[sSet_df$L.PreyBM>-30,]
@@ -522,8 +520,7 @@ if( interactive() ) print(x)
 
 #ggplot(sSet_df_gr2, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
 
-=======
->>>>>>> 8bc6ad4b3440e62a753431503697ac5942b070f2
+
 ```
 
 Based on data check, I'm going to remove any points with handling times <-15 on ln-scale.
@@ -723,7 +720,143 @@ abline(0,0)
 
 ```{r echo=FALSE, fig.width=10, fig.height=10, warning=FALSE}
 
-
 #predict
-ggPredict(ss_m2_na, interactive = TRUE)
+ggPredict(ss_m2, interactive = TRUE)
 ```
+
+Because the Madingley is coded with prey body masses only I'll try re-fit the subset with prey and predator only. I'll also try combinations with temperature.
+
+```{r echo=FALSE, fig.width=10, fig.height=10, warning=FALSE}
+
+#Prey only
+ss_Prey<-lm(L.Fittted.h..day.~L.PreyBM, data=df_sSet)
+summary(ss_Prey)
+
+#Let's check
+op<-par(mfrow=c(2,2))
+plot(ss_Prey)
+
+#Check for normality
+E<-rstandard(ss_Prey)
+
+hist(E)
+qqnorm(E)
+
+ss_Prey_na<-lm(L.Fittted.h..day.~L.PreyBM, data=df_na_sSet)
+df_na_sSet<-na.omit(df_sSet)
+E<-rstandard(ss_Prey_na)
+
+#check for independence and homogeneity: residuals versus individual explanatory variables
+plot(y=E, x=df_na_sSet$L.PreyBM, xlab="Ln Prey bodymass", ylab="Residuals")
+abline(0,0)
+
+plot(y=E, x=df_na_sSet$L.PredBM, xlab="Ln Predator bodymass", ylab="Residuals")
+abline(0,0)
+
+#Residuals against Temp
+plot(E~df_na_sSet$temp_A, xlab="Temp, A", ylab="Residuals")
+abline(0,0)
+
+ggPredict(ss_Prey_na, interactive = TRUE)
+
+
+#Prey with Temperature
+ss_PreyTemp<-lm(L.Fittted.h..day.~L.PreyBM+temp_A, data=df_sSet)
+summary(ss_PreyTemp)
+
+#Let's check
+op<-par(mfrow=c(2,2))
+plot(ss_Prey)
+
+#Check for normality
+E<-rstandard(ss_PreyTemp)
+
+hist(E)
+qqnorm(E)
+
+ss_PreyTemp_na<-lm(L.Fittted.h..day.~L.PreyBM+temp_A, data=df_na_sSet)
+df_na_sSet<-na.omit(df_sSet)
+E<-rstandard(ss_PreyTemp_na)
+
+#check for independence and homogeneity: residuals versus individual explanatory variables
+plot(y=E, x=df_na_sSet$L.PreyBM, xlab="Ln Prey bodymass", ylab="Residuals")
+abline(0,0)
+
+plot(y=E, x=df_na_sSet$L.PredBM, xlab="Ln Predator bodymass", ylab="Residuals")
+abline(0,0)
+
+#Residuals against Temp
+plot(E~df_na_sSet$temp_A, xlab="Temp, A", ylab="Residuals")
+abline(0,0)
+
+ggPredict(ss_PreyTemp_na, interactive = TRUE)
+
+
+#predator
+ss_Pred<-lm(L.Fittted.h..day.~L.PredBM, data=df_sSet)
+summary(ss_Pred)
+
+#Let's check
+op<-par(mfrow=c(2,2))
+plot(ss_Pred)
+
+#Check for normality
+E<-rstandard(ss_Pred)
+
+hist(E)
+qqnorm(E)
+
+ss_Pred_na<-lm(L.Fittted.h..day.~L.PredBM, data=df_na_sSet)
+#df_na_sSet<-na.omit(df_sSet)
+E<-rstandard(ss_Pred_na)
+
+#check for independence and homogeneity: residuals versus individual explanatory variables
+plot(y=E, x=df_na_sSet$L.PreyBM, xlab="Ln Prey bodymass", ylab="Residuals")
+abline(0,0)
+
+plot(y=E, x=df_na_sSet$L.PredBM, xlab="Ln Predator bodymass", ylab="Residuals")
+abline(0,0)
+
+#Residuals against Temp
+plot(E~df_na_sSet$temp_A, xlab="Temp, A", ylab="Residuals")
+abline(0,0)
+
+ggPredict(ss_Pred, interactive = TRUE)
+
+
+#Predator and Temp
+ss_PredTemp<-lm(L.Fittted.h..day.~L.PredBM+temp_A, data=df_sSet)
+summary(ss_PredTemp)
+
+#Let's check
+op<-par(mfrow=c(2,2))
+plot(ss_PredTemp)
+
+#Check for normality
+E<-rstandard(ss_PredTemp)
+
+hist(E)
+qqnorm(E)
+
+ss_PredTemp_na<-lm(L.Fittted.h..day.~L.PredBM+temp_A, data=df_na_sSet)
+#df_na_sSet<-na.omit(df_sSet)
+E<-rstandard(ss_PredTemp_na)
+
+#check for independence and homogeneity: residuals versus individual explanatory variables
+plot(y=E, x=df_na_sSet$L.PreyBM, xlab="Ln Prey bodymass", ylab="Residuals")
+abline(0,0)
+
+plot(y=E, x=df_na_sSet$L.PredBM, xlab="Ln Predator bodymass", ylab="Residuals")
+abline(0,0)
+
+#Residuals against Temp
+plot(E~df_na_sSet$temp_A, xlab="Temp, A", ylab="Residuals")
+abline(0,0)
+
+ggPredict(ss_PredTemp, interactive = TRUE)
+
+
+```
+
+
+
