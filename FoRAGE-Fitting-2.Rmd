@@ -490,6 +490,10 @@ if( interactive() ) print(x)
 
 
 ##Sub-set 2##
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8bc6ad4b3440e62a753431503697ac5942b070f2
 sSet_df_gr2<-sSet_df[sSet_df$L.PreyBM<0 & sSet_df$L.PreyBM>=-15,]
 
 #par(mfrow=c(2,2))
@@ -503,6 +507,7 @@ if( interactive() ) print(x)
 #ggplot(sSet_df_gr2, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
 
 
+<<<<<<< HEAD
 ##sub-set 3##
 #summary(sSet_df$L.PreyBM)
 sSet_df_gr3<-sSet_df[sSet_df$L.PreyBM>-30,]
@@ -517,6 +522,8 @@ if( interactive() ) print(x)
 
 #ggplot(sSet_df_gr2, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
 
+=======
+>>>>>>> 8bc6ad4b3440e62a753431503697ac5942b070f2
 ```
 
 Based on data check, I'm going to remove any points with handling times <-15 on ln-scale.
