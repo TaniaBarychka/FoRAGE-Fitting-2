@@ -521,7 +521,19 @@ if( interactive() ) print(x)
 #ggplot(sSet_df_gr2, aes(L.PreyBM,L.Fittted.h..day.,col=Habitat))+geom_point_interactive()
 
 
+#main
+main_df<-forage_db[forage_db$L.Fittted.h..day.>-15,]
+
+# plots
+gg_point = ggplot(data = main_df)+geom_point_interactive(aes(x = L.PreyBM, y = L.Fittted.h..day., color=Habitat, shape=Vert.invert,tooltip = Data.set, data_id = Data.set)) + theme_minimal()
+
+x<-girafe(ggobj = gg_point)
+if( interactive() ) print(x)
+
 ```
+
+
+
 
 Based on data check, I'm going to remove any points with handling times <-15 on ln-scale.
 
@@ -604,7 +616,7 @@ outlierTest(modPrey)
 
 ```
 
-Fit:
+Fits:
 
 ```{r fig.width=10, fig.height=10, warning=FALSE}
 
