@@ -70,11 +70,15 @@ table(forage_db$Major.grouping.1)
 
 ```{r echo=FALSE,fig.width=10, fig.height=10}
 
+#convert mg to gram
+forage_db$Predator.mass.g<-forage_db$Predator.mass..mg./1000
+forage_db$Prey.mass.g<-forage_db$Prey.mass..mg./1000
+
 #I'll convert body masses and rates to NATURAL locarithms.
 
 #reduce data set to the variables we're interested in. 
-forage_db$L.PredBM<-log(forage_db$Predator.mass..mg.)
-forage_db$L.PreyBM<-log(forage_db$Prey.mass..mg.)
+forage_db$L.PredBM<-log(forage_db$Predator.mass.g)
+forage_db$L.PreyBM<-log(forage_db$Prey.mass.g)
 forage_db$L.Fitted.a..median.of.BS.samples.<-log(forage_db$Fitted.a..median.of.BS.samples.)
 forage_db$L.Fittted.h..day.<-log(forage_db$Fittted.h..day.)
 
@@ -553,10 +557,10 @@ forage_db$temp_A<-(forage_db$temp_K-To)/(k*forage_db$temp_K*To)
 
 
 
-df_sSet<-cbind(as.numeric(forage_db$L.PredBM), as.numeric(forage_db$L.PreyBM), as.numeric(forage_db$L.Fittted.h..day.), as.numeric(forage_db$temp_A))
+df_sSet<-cbind(as.numeric(forage_db$L.PredBM), as.numeric(forage_db$L.PreyBM), as.numeric(forage_db$L.Fittted.h..day.), as.numeric(forage_db$temp_A), as.numeric(forage_db$Prey.mass.g),as.numeric(forage_db$Predator.mass.g))
 
 #colnames(df)<-c("LogPredBM", "LogPreyBM", "LogFittedAR", "LogFittedH_day", "Temp_c")
-colnames(df_sSet)<-c("L.PredBM", "L.PreyBM", "L.Fittted.h..day.", "temp_A")
+colnames(df_sSet)<-c("L.PredBM", "L.PreyBM", "L.Fittted.h..day.", "temp_A", "PreyBM.g", "PredBM.g")
 
 #add ecto and endotherms
 forage_db$EctoEndo<-ifelse(forage_db$Major.grouping.1=="Bird" | forage_db$Major.grouping.1=="Mammal", "Endo", "Ecto" )
@@ -734,6 +738,22 @@ abline(0,0)
 
 #predict
 ggPredict(ss_m2, interactive = TRUE)
+```
+
+As a fraction of prey and predator body masses:
+
+a) re-plot predict with a different x-axis
+b) refit the model ht~log(prey/pred)
+
+```{r echo=FALSE, fig.width=10, fig.height=10, warning=FALSE}
+
+#a)
+
+plot(log(df_sSet$PreyBM.g/df_sSet$PredBM.g), df_sSet$L.Fittted.h..day., xlab=c("Ln(PreyBM.g/PredBM.g)"), ylab = c("Ln(FittedTh.day) "))
+abline(ss_m2, col="blue")
+
+
+
 ```
 
 Because the Madingley is coded with prey body masses only I'll try re-fit the subset with prey and predator only. I'll also try combinations with temperature.
