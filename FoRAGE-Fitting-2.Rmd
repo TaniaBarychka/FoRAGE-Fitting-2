@@ -574,6 +574,7 @@ df_sSet$VertInvert<-forage_db$Vert.invert
 df_sSet$EctoEndo<-forage_db$EctoEndo
 
 #df_na<-na.omit(df_no)
+df_sSet$Habitat<-forage_db$Habitat
 
 df_sSet<-df_sSet[df_sSet$L.Fittted.h..day.>-15,]
 
@@ -891,4 +892,35 @@ ggPredict(ss_PredTemp, interactive = TRUE)
 ```
 
 
+30/03/2020
+--
 
+Lucas raised concern regarding potential effects of prey and predator masses in terrestrial vs marine environments on the handling times, following our conversation with Samraat Pawar. I'm going to give fitting terrestrial vs marine abridged database one more shot.
+
+
+```{r echo=FALSE}
+
+#I'm goint to remove mixed
+df_sSet<-df_sSet[df_sSet$Habitat!="Mixed",]
+
+table(df_sSet$Habitat)
+head(df_sSet)
+
+#Let's try the simplest model first: Prey*Habitat
+ggplot(df_sSet,aes(L.PreyBM, L.Fittted.h..day., col=Habitat))+geom_point()
+ggplot(df_sSet, aes(L.PredBM, L.Fittted.h..day., col=Habitat))+geom_point()
+
+```
+
+There is a lot of intersection between points.
+
+```{r echo=FALSE}
+
+#maximal model
+m1<-lm(L.Fittted.h..day.~L.PreyBM*L.PredBM*Habitat, data=df_sSet)
+summary(m1)
+
+m2<-step(m1)
+summary(m2)
+
+```
