@@ -906,21 +906,97 @@ df_sSet<-df_sSet[df_sSet$Habitat!="Mixed",]
 table(df_sSet$Habitat)
 head(df_sSet)
 
-#Let's try the simplest model first: Prey*Habitat
-ggplot(df_sSet,aes(L.PreyBM, L.Fittted.h..day., col=Habitat))+geom_point()
-ggplot(df_sSet, aes(L.PredBM, L.Fittted.h..day., col=Habitat))+geom_point()
 
+plot(df_sSet$L.Fittted.h..day.~df_sSet$Habitat)
+
+
+summary(aov(df_sSet$L.Fittted.h..day.~df_sSet$Habitat))
+
+
+#let's check the assumptions of teh model
+op<-par(mfrow=c(2,2))
+plot(aov(df_sSet$L.Fittted.h..day.~df_sSet$Habitat))
+
+##effect sizes
+model<-aov(df_sSet$L.Fittted.h..day.~df_sSet$Habitat)
+model.tables(model, se=T)
+
+summary.lm(model)
+
+```
+
+
+Median handling times are lower for aquatic than for terrestrial bu there is considerable variation in aquatic. It is not clear whether handling times for aquatics will turn out significantly different lower than terrestrial.
+
+
+The difference between the habitat means is significant at 0.01.
+
+The first plot (constancy of variance): no patterns in the residuals against the fitted values. Normality of errors (second plot): not perfect but not too terrible. The residuals are well behaved (bottom left) and there are no highly influential points.
+
+In summary.lm the intercept is the mean value for aquatic. The second line is the difference between the mean handling time for aquatic and terrestrial. 
+
+
+```{r echo =FALSE, eval=FALSE}
+par(mfrow=c(1,1))
+attach(df_sSet)
+#Let's try the simplest model first: Prey*Habitat
+plot(L.PreyBM,L.Fittted.h..day., pch=16, col=c("blue", "red")[as.numeric(Habitat)])
+
+
+#levels(df_sSet$Habitat)
+
+abline(lm(L.Fittted.h..day.[Habitat=="Aquatic"]~L.PreyBM[Habitat=="Aquatic"]), col="blue")
+abline(lm(L.Fittted.h..day.[Habitat=="Terrestrial"]~L.PreyBM[Habitat=="Terrestrial"]), col="red")
+
+ggplot(df_sSet,aes(L.PreyBM, L.Fittted.h..day., col=Habitat))+geom_point()
 ```
 
 There is a lot of intersection between points.
 
+The regression line for terrestria is above the line for aquatic animals.
+
+The lines are rougly parralel
+
+The interceepts are likely to be significantly different.
+
 ```{r echo=FALSE}
+
+#ttest
+t.test(df_sSet$L.Fittted.h..day.~df_sSet$Habitat)
+
 
 #maximal model
 m1<-lm(L.Fittted.h..day.~L.PreyBM*L.PredBM*Habitat, data=df_sSet)
 summary(m1)
 
-m2<-step(m1)
+anova(m1)
+
+#remove three-way inetraction
+m2<-update(m1, ~ .-L.PreyBM:L.PredBM:Habitat)
+anova(m2)
+
 summary(m2)
 
+m3<-update(m2,~ .-Habitat)
+summary(m3)
+
+anova(m1, m2)
+
+anova(m2,m3)
+
+#also, lets try step simplification
+step(m1)
+
+op<-par(mfrow=c(2,2))
+
+plot(m2)
+plot(m3)
+
 ```
+
+
+As before, both predator and prey bodymasses are highly significant. The inetractions between body masses and with habitat are also highly significant. 
+
+The simlification to remove habitat seems to be justified because it caused a negligible reduction in the explanatory power of the model (p=0.10; to retain we would need p<0.05). Step function suggests not removing habitat.
+
+
