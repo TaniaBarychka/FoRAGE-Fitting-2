@@ -898,7 +898,7 @@ ggPredict(ss_PredTemp, interactive = TRUE)
 Lucas raised concern regarding potential effects of prey and predator masses in terrestrial vs marine environments on the handling times, following our conversation with Samraat Pawar. I'm going to give fitting terrestrial vs marine abridged database one more shot.
 
 
-```{r echo=FALSE}
+```{r echo=FALSE,fig.width=10, fig.height=10}
 
 #I'm goint to remove mixed
 df_sSet<-df_sSet[df_sSet$Habitat!="Mixed",]
@@ -936,7 +936,7 @@ The first plot (constancy of variance): no patterns in the residuals against the
 In summary.lm the intercept is the mean value for aquatic. The second line is the difference between the mean handling time for aquatic and terrestrial. 
 
 
-```{r echo =FALSE, eval=FALSE}
+```{r echo =FALSE}
 par(mfrow=c(1,1))
 attach(df_sSet)
 #Let's try the simplest model first: Prey*Habitat
@@ -959,7 +959,7 @@ The lines are rougly parralel
 
 The interceepts are likely to be significantly different.
 
-```{r echo=FALSE}
+```{r echo=FALSE,fig.width=7, fig.height=10}
 
 #ttest
 t.test(df_sSet$L.Fittted.h..day.~df_sSet$Habitat)
@@ -986,10 +986,22 @@ anova(m2,m3)
 
 #also, lets try step simplification
 step(m1)
+```
 
+**m1.-L.PreyBM:L.PredBM:Habitat**
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
 op<-par(mfrow=c(2,2))
 
 plot(m2)
+
+```
+
+**m1.-L.PreyBM:L.PredBM:Habitat - Habitat**
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+op<-par(mfrow=c(2,2))
 plot(m3)
 
 ```
@@ -997,6 +1009,125 @@ plot(m3)
 
 As before, both predator and prey bodymasses are highly significant. The inetractions between body masses and with habitat are also highly significant. 
 
-The simlification to remove habitat seems to be justified because it caused a negligible reduction in the explanatory power of the model (p=0.10; to retain we would need p<0.05). Step function suggests not removing habitat.
+The simlification to remove habitat seems to be justified because it caused a negligible reduction in the explanatory power of the model (p=0.10; to retain we would need p<0.05). 
+
+Step function suggests not removing habitat.
+
+Let's try a fit for separate habitats.
+
+1.Terrestrial
+---
+
+Full complex model.
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+df_sSet_Terr<-df_sSet[df_sSet$Habitat=="Terrestrial",]
+
+m1_terr<-lm(df_sSet_Terr$L.Fittted.h..day.~df_sSet_Terr$L.PreyBM*df_sSet_Terr$L.PredBM*df_sSet_Terr$temp_A)
+
+summary(m1_terr)
+
+#delete interaction
+m2_terr<-update(m1_terr,~.-df_sSet_Terr$L.PreyBM:df_sSet_Terr$temp_A)
+summary(m2_terr)
+
+m3_terr<-update(m2_terr, ~.-df_sSet_Terr$L.PreyBM:df_sSet_Terr$L.PredBM:df_sSet_Terr$temp_A)
+summary(m3_terr)
+
+m4_terr<-update(m3_terr,~.-df_sSet_Terr$temp_A)
+summary(m4_terr)
+anova(m4_terr)
+drop1(m4_terr)
+
+```
+
+Dropping PredBM:Temp increases AIC from 516.81 to 518.90. I think it's worth it.
+
+```{r, echo=FALSE,fig.width=10, fig.height=10}
+
+m5_terr<-update(m4_terr, ~.-df_sSet_Terr$L.PredBM:df_sSet_Terr$temp_A)
+summary(m5_terr)
+anova(m5_terr)
 
 
+#anova(m4_terr,m5_terr)
+
+
+op<-par(mfrow=c(2,2))
+plot(m5_terr)
+
+```
+
+
+Optimal model is: **L.Fittted.h..day. ~ L.PreyBM + L.PredBM + L.PreyBM:df_sSet_Terr$L.PredBM**. Worryingly, the inetraction between prey and predator body masses are highly significant.
+
+
+```{r echo=FALSE}
+
+#correlation test
+corDF<-cor.test(df_sSet_Terr$L.PredBM, df_sSet_Terr$L.PreyBM)
+corDF
+
+#The variance inflation factor (VIF) quantifies the extent of correlation between one predictor and the other predictors in a model. It is used for diagnosing collinearity/multicollinearity. Higher values signify that it is difficult to impossible to assess accurately the contribution of predictors to a model.
+
+vifDF<-corvif(df_sSet_Terr[,-c(3:9)])
+
+```
+
+
+Correlaiton is high (=0.81) but VIFs are still under 3 (=2.86).
+
+
+
+Lets try a simpler model:
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+m6_terr<-lm(df_sSet_Terr$L.Fittted.h..day.~df_sSet_Terr$L.PreyBM+df_sSet_Terr$L.PredBM+df_sSet_Terr$temp_A)
+
+summary(m6_terr)
+drop1(m6_terr)
+
+m7_terr<-update(m6_terr, ~. -df_sSet_Terr$temp_A)
+summary(m7_terr)
+
+
+
+```
+
+Dropping Temp increases AIC from 587.23 to 589.26. I think it is sensible to drop temperature.
+
+Let's check the model:
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+op<-par(mfrow=c(2,2))
+plot(m7_terr)
+
+op<-par(mfrow=c(1,1))
+
+df_sSet_Terr_na<-df_sSet_Terr[,c(1:3)]
+df_sSet_Terr_na<-na.omit(df_sSet_Terr_na)
+#summary(df_sSet_Terr_na)
+
+m7_terr_na<-lm(L.Fittted.h..day.~L.PreyBM+L.PredBM, data=df_sSet_Terr_na)
+
+ggPredict(m7_terr_na, interactive = TRUE)
+
+```
+
+
+Compare the model with and without PreyBM:PredBM interaction:
+
+
+```{r echo=FALSE}
+anova(m5_terr, m7_terr)
+AIC(m5_terr, m7_terr)
+
+m5_terr_na<-lm(L.Fittted.h..day.~L.PreyBM*L.PredBM, data=df_sSet_Terr_na)
+ggPredict(m5_terr_na, interactive=TRUE)
+
+```
+
+The models are significantly different with the model incl inetraction outperforming the model without interaction.
