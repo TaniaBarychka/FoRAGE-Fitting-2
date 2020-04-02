@@ -1130,4 +1130,76 @@ ggPredict(m5_terr_na, interactive=TRUE)
 
 ```
 
-The models are significantly different with the model incl inetraction outperforming the model without interaction.
+The models are significantly different with the model incl interaction outperforming the model without interaction.
+
+2. Aquatic
+---
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+df_sSet_Aqua<-df_sSet[df_sSet$Habitat=="Aquatic",]
+
+m1_aq<-lm(df_sSet_Aqua$L.Fittted.h..day.~df_sSet_Aqua$L.PreyBM*df_sSet_Aqua$L.PredBM*df_sSet_Aqua$temp_A)
+
+summary(m1_aq)
+
+#delete interaction
+m2_aq<-update(m1_aq,~.-df_sSet_Aqua$temp_A)
+summary(m2_aq)
+
+m3_aq<-update(m2_aq, ~.-df_sSet_Aqua$L.PredBM:df_sSet_Aqua$temp_A)
+summary(m3_aq)
+
+m4_aq<-update(m3_aq,~.-df_sSet_Aqua$L.PreyBM:df_sSet_Aqua$L.PredBM)
+summary(m4_aq)
+
+anova(m4_aq)
+drop1(m4_aq)
+
+```
+
+
+The optimal model has prey, predator body masses, PreyBM:Temp interaction and a three-way Prey:Pred:Temp interaction.
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+op<-par(mfrow=c(2,2))
+plot(m4_aq)
+
+
+op<-par(mfrow=c(1,1))
+
+df_sSet_Aqua_na<-df_sSet_Aqua[,c(1:4)]
+df_sSet_Aqua_na<-na.omit(df_sSet_Aqua_na)
+#summary(df_sSet_Terr_na)
+
+#m4_aqua_na<-lm(L.Fittted.h..day.~ L.PreyBM + L.PredBM + L.PreyBM:temp_A +L.PreyBM:L.PredBM:temp_A, data=df_sSet_Aqua_na)
+
+#ggPredict(m4_aqua_na, interactive = TRUE)
+
+```
+
+Validation plots look OK-ish but the model is too complex.
+
+
+```{r echo=FALSE,fig.width=10, fig.height=10}
+
+m5_aq<-lm(df_sSet_Aqua$L.Fittted.h..day.~df_sSet_Aqua$L.PreyBM+df_sSet_Aqua$L.PredBM+df_sSet_Aqua$temp_A)
+
+summary(m5_aq)
+drop1(m5_aq)
+
+op<-par(mfrow=c(2,2))
+plot(m5_aq)
+
+#m5_aq_na<-lm(L.Fittted.h..day.~L.PreyBM+L.PredBM+temp_A, data=df_sSet_Aqua_na)
+#ggPredict(m5_aq_na)
+
+anova(m4_aq, m5_aq)
+AIC(m4_aq,m5_aq)
+
+```
+
+Amazingly, for this model for aquatics, temp is highly significant along with prey and predator body masses.AICs are 3524.93 vs 3561.13.
+
+The model with interactionsis significantly better that the model without interactions.
